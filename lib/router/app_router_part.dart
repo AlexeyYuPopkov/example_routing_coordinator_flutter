@@ -1,16 +1,17 @@
 part of 'app_router.dart';
 
 /// The implementations live here, next to the route tree, because that tree is
-/// what knows where a location leads. Screens keep the interfaces only.
+/// what knows where a request leads. Screens keep the interfaces only.
+///
+/// The destination is a generated route object rather than a string, so a
+/// missing or misspelled argument is a compile error.
 
 final class FeedPostListCoordinatorImpl implements PostListScreenCoordinator {
   const FeedPostListCoordinatorImpl();
 
   @override
   void onPostRoute(BuildContext context, {required String postId}) =>
-      GoRouter.of(
-        context,
-      ).push(AppRouterPath.postIn(AppRouterPath.feed, postId));
+      AutoRouter.of(context).push(FeedPostDetailsRoute(postId: postId));
 }
 
 final class FeedPostDetailsCoordinatorImpl
@@ -19,26 +20,7 @@ final class FeedPostDetailsCoordinatorImpl
 
   @override
   void onAuthorRoute(BuildContext context, {required String userId}) =>
-      GoRouter.of(
-        context,
-      ).push(AppRouterPath.userIn(AppRouterPath.feed, userId));
-
-  /// `push` is a future of whatever the pushed location is popped with,
-  /// so a request that answers back needs nothing special here.
-  @override
-  Future<User?> onPickUserRoute(BuildContext context) => GoRouter.of(
-    context,
-  ).push<User>(AppRouterPath.userPickerIn(AppRouterPath.feed));
-}
-
-/// Closing the picker is a decision, not a side effect of choosing, and it
-/// is taken here rather than inside the screen.
-final class UserPickerCoordinatorImpl implements UserPickerScreenCoordinator {
-  const UserPickerCoordinatorImpl();
-
-  @override
-  void onUserPickedRoute(BuildContext context, {required User user}) =>
-      GoRouter.of(context).pop(user);
+      AutoRouter.of(context).push(FeedUserProfileRoute(userId: userId));
 }
 
 /// The profile inside the feed: the posts of an author belong to this same
@@ -49,9 +31,7 @@ final class FeedUserProfileCoordinatorImpl
 
   @override
   void onUserPostsRoute(BuildContext context, {required String userId}) =>
-      GoRouter.of(
-        context,
-      ).push(AppRouterPath.userPostsIn(AppRouterPath.feed, userId));
+      AutoRouter.of(context).push(FeedUserPostsRoute(userId: userId));
 }
 
 final class ContactsCoordinatorImpl implements ContactsScreenCoordinator {
@@ -59,23 +39,22 @@ final class ContactsCoordinatorImpl implements ContactsScreenCoordinator {
 
   @override
   void onUserProfileRoute(BuildContext context, {required String userId}) =>
-      GoRouter.of(
-        context,
-      ).push(AppRouterPath.userIn(AppRouterPath.contacts, userId));
+      AutoRouter.of(context).push(ContactsUserProfileRoute(userId: userId));
 }
 
 /// The same screen and the same request as in [FeedUserProfileCoordinatorImpl],
 /// with a different answer.
 ///
-/// `go` instead of `push`: the location belongs to the other branch, so the
-/// shell switches the tab for us, and the contacts stack stays where it was.
+/// The destination belongs to the other tab, which no nested stack router can
+/// push into. Navigating the root router by path lets auto_route activate that
+/// tab itself, and the contacts stack stays where it was.
 final class ContactsUserProfileCoordinatorImpl
     implements UserProfileScreenCoordinator {
   const ContactsUserProfileCoordinatorImpl();
 
   @override
   void onUserPostsRoute(BuildContext context, {required String userId}) =>
-      GoRouter.of(
+      AutoRouter.of(
         context,
-      ).go(AppRouterPath.userPostsIn(AppRouterPath.feed, userId));
+      ).root.navigatePath(AppRouterPath.feedUserPosts(userId));
 }

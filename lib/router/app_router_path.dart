@@ -1,32 +1,18 @@
-/// Locations of the app, in one place.
+/// Paths of the app, in one place.
 ///
-/// The `*In` helpers build a concrete location inside a given tab. The same
-/// screen can live in more than one tab, so the branch is a parameter rather
-/// than a part of the constant.
+/// auto_route navigates by typed route objects most of the time. A path is
+/// still needed when the destination lives in another tab, and for deep links.
 final class AppRouterPath {
   const AppRouterPath();
 
-  static const String feed = '/feed';
-  static const String contacts = '/contacts';
+  static const String root = '/';
+  static const String feed = 'feed';
+  static const String contacts = 'contacts';
 
+  static const String initial = '';
   static const String post = 'post/:postId';
   static const String user = 'user/:userId';
   static const String userPosts = 'user/:userId/posts';
-  static const String userPicker = 'pick_user';
 
-  static String postIn(String branch, String postId) => '$branch/post/$postId';
-
-  static String userIn(String branch, String userId) => '$branch/user/$userId';
-
-  static String userPostsIn(String branch, String userId) =>
-      '$branch/user/$userId/posts';
-
-  static String userPickerIn(String branch) => '$branch/pick_user';
-}
-
-final class AppRouterParam {
-  const AppRouterParam();
-
-  static const String postId = 'postId';
-  static const String userId = 'userId';
+  static String feedUserPosts(String userId) => '/feed/user/$userId/posts';
 }

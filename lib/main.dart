@@ -12,9 +12,9 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Routing. Coordinator. go_router',
+      title: 'Routing. Coordinator. auto_route',
       theme: buildAppTheme(),
-      routerConfig: appRouter.router,
+      routerConfig: appRouter.config(),
     );
   }
 }
