@@ -1,0 +1,67 @@
+import 'package:common/presentation/raw_event/raw_event_screen.dart';
+import 'package:nostr_notes/auth/presentation/login_item_form/bloc/login_item_details_params.dart';
+import 'package:nostr_notes/auth/presentation/settings/contacts/contacts_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:nostr_notes/app/router/screens_assembly/screens_assembly.dart';
+import 'package:nostr_notes/auth/presentation/note_screen/note_screen.dart';
+import 'package:nostr_notes/auth/presentation/login_item_form/login_item_form_screen.dart';
+
+import 'package:nostr_notes/auth/presentation/model/path_params.dart';
+import 'package:nostr_notes/auth/presentation/note_screen/note_preview_screen/note_preview_screen.dart';
+import 'package:nostr_notes/auth/presentation/settings/del_acc/del_acc_screen.dart';
+import 'package:nostr_notes/auth/presentation/settings/donate_lightning/donate_lightning_screen.dart';
+import 'package:nostr_notes/auth/presentation/settings/export_import/export_import_screen.dart';
+import 'package:nostr_notes/auth/presentation/settings/help_screen/help_screen.dart';
+import 'package:nostr_notes/auth/presentation/settings/preferences/preferences_screen.dart';
+import 'package:nostr_notes/auth/presentation/settings/privacy_policy_screen/privacy_policy_screen.dart';
+import 'package:nostr_notes/auth/presentation/settings/relays_list/relays_list_screen.dart';
+
+final class AppScreensAssembly implements ScreensAssembly {
+  const AppScreensAssembly();
+
+  @override
+  Widget createNoteScreen(
+    PathParams? pathParams, {
+    required NotePreviewScreenCoordinator coordinator,
+  }) {
+    return NoteScreen(pathParams: pathParams, coordinator: coordinator);
+  }
+
+  @override
+  Widget createRawEventScreen(PathParamsEventId params) {
+    return RawEventScreen(eventId: params.eventId);
+  }
+
+  @override
+  Widget createAppSettingsScreen() => const PreferencesScreen();
+
+  @override
+  Widget createRelaysListScreen() => const RelaysListScreen();
+
+  @override
+  Widget createHelpScreen() => const HelpScreen();
+
+  @override
+  Widget createContactsScreen({bool showAppBar = true}) =>
+      ContactsScreen(showAppBar: showAppBar);
+
+  @override
+  Widget createPrivacyPolicyScreen({bool showAppBar = true}) =>
+      PrivacyPolicyScreen(showAppBar: showAppBar);
+
+  @override
+  Widget deleteAccUsecaseScreen() => const DelAccScreen();
+
+  @override
+  Widget createDonateLightningScreen() => const DonateLightningScreen();
+
+  @override
+  Widget createExportImportScreen() => const ExportImportScreen();
+
+  @override
+  @override
+  Widget createLoginItemFormScreen({
+    required LoginItemDetailsParams params,
+    required LoginItemFormScreenCoordinator coordinator,
+  }) => LoginItemFormScreen(params: params, coordinator: coordinator);
+}
