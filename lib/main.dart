@@ -1,36 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:routing_coordinator_flutter/router/app_router.dart';
 import 'package:routing_coordinator_flutter/ui/app_theme.dart';
 
-/// The `main` branch carries only the shared parts: domain, data and the
-/// presentational widgets. Each routing example lives on its own branch and
-/// replaces this entry point:
-///
-///   git switch part-1-imperative
-///   git switch part-2-gorouter
-///   git switch part-3-autoroute
-void main() => runApp(const BranchPlaceholderApp());
+void main() => runApp(App(appRouter: AppRouter()));
 
-class BranchPlaceholderApp extends StatelessWidget {
-  const BranchPlaceholderApp({super.key});
+class App extends StatelessWidget {
+  final AppRouter appRouter;
+
+  const App({super.key, required this.appRouter});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
+      title: 'Routing. Coordinator. go_router',
       theme: buildAppTheme(),
-      home: const Scaffold(
-        body: Center(
-          child: Padding(
-            padding: EdgeInsets.all(24),
-            child: Text(
-              'The examples live on branches:\n\n'
-              'part-1-imperative\n'
-              'part-2-gorouter\n'
-              'part-3-autoroute',
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-      ),
+      routerConfig: appRouter.router,
     );
   }
 }
