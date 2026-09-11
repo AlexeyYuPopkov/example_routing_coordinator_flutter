@@ -1,17 +1,61 @@
-# routing_coordinator_flutter
+# Routing. Coordinator
 
-A new Flutter project.
+Демо-проект к статье «Flutter tips. Routing. Coordinator» о том, как вынести
+переходы между экранами из реализации самих экранов.
 
-## Getting Started
+## Ветки
 
-This project is a starting point for a Flutter application.
+| Ветка | Что показывает |
+| --- | --- |
+| `main` | Общая база: домен, данные, презентационные виджеты. Роутинга нет. |
+| `part-1-imperative` | Императивный роутинг. В экран инжектится колбэк, его параметр это sealed-класс перехода. |
+| `part-2-gorouter` | Декларативный роутинг на go_router плюс паттерн «координатор». |
+| `part-3-autoroute` | То же самое на auto_route. Ответвлена от `part-2-gorouter`. |
 
-A few resources to get you started if this is your first Flutter project:
+Ветка `part-3-autoroute` ответвлена от `part-2-gorouter` намеренно. Команда
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```
+git diff part-2-gorouter..part-3-autoroute
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+показывает ровно слой роутинга и ничего больше: экраны и их контракты в обеих
+ветках совпадают дословно.
+
+## Демо-приложение
+
+Нижний таб-бар, две вкладки, в каждой свой `Navigator` и свой стек master-detail.
+
+```
+Лента      : список постов -> пост -> профиль автора -> посты автора -> пост ...
+Контакты   : список людей  -> профиль -> посты автора
+```
+
+Экран профиля переиспользуется обеими вкладками, и ведёт себя в них по-разному.
+
+| Откуда открыт профиль | Что делает кнопка «Посты пользователя» |
+| --- | --- |
+| Лента | Кладёт список постов в стек той же вкладки |
+| Контакты | Переключает на вкладку «Лента» и открывает список там |
+
+Экран при этом один и тот же. Разной остаётся только реализация координатора
+(части 2 и 3) или реализация колбэка (часть 1), которую экран получает снаружи.
+Это и есть главная мысль статьи в наименьшем возможном объёме кода.
+
+## Запуск
+
+```
+git switch part-2-gorouter
+flutter pub get
+flutter run
+```
+
+Ветка `part-3-autoroute` дополнительно требует кодогенерации:
+
+```
+dart run build_runner build --delete-conflicting-outputs
+```
+
+## Папка `reference`
+
+Выдержки из боевого проекта, послужившие источником паттернов. В сборку не
+входят и исключены из анализатора.
