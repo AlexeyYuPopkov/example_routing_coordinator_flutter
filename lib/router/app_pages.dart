@@ -2,16 +2,17 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:routing_coordinator_flutter/router/app_router.dart';
 import 'package:routing_coordinator_flutter/router/app_tabs.dart';
-import 'package:routing_coordinator_flutter/router/screens_assembly/app_screens_assembly.dart';
-import 'package:routing_coordinator_flutter/router/screens_assembly/screens_assembly.dart';
+import 'package:routing_coordinator_flutter/screens/contacts_screen.dart';
+import 'package:routing_coordinator_flutter/screens/post_details_screen.dart';
+import 'package:routing_coordinator_flutter/screens/post_list_screen.dart';
+import 'package:routing_coordinator_flutter/screens/user_picker_screen.dart';
+import 'package:routing_coordinator_flutter/screens/user_profile_screen.dart';
 
 /// The pages the generator knows about.
 ///
 /// Each one pairs a screen with the coordinator it should get, which keeps the
 /// `@RoutePage` annotation, and auto_route itself, out of the screens. The
 /// screens of this branch are byte for byte the ones of `part-2-gorouter`.
-const ScreensAssembly _screens = AppScreensAssembly();
-
 @RoutePage()
 class RootPage extends StatelessWidget {
   const RootPage({super.key});
@@ -45,9 +46,8 @@ class FeedPage extends StatelessWidget {
   const FeedPage({super.key});
 
   @override
-  Widget build(BuildContext context) => _screens.createPostListScreen(
-    coordinator: const FeedPostListCoordinatorImpl(),
-  );
+  Widget build(BuildContext context) =>
+      const PostListScreen(coordinator: FeedPostListCoordinatorImpl());
 }
 
 @RoutePage()
@@ -60,7 +60,7 @@ class FeedPostDetailsPage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => _screens.createPostDetailsScreen(
+  Widget build(BuildContext context) => PostDetailsScreen(
     postId: postId,
     coordinator: const FeedPostDetailsCoordinatorImpl(),
   );
@@ -78,7 +78,7 @@ class FeedUserPostsPage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => _screens.createPostListScreen(
+  Widget build(BuildContext context) => PostListScreen(
     authorId: userId,
     coordinator: const FeedPostListCoordinatorImpl(),
   );
@@ -94,7 +94,7 @@ class FeedUserProfilePage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => _screens.createUserProfileScreen(
+  Widget build(BuildContext context) => UserProfileScreen(
     userId: userId,
     coordinator: const FeedUserProfileCoordinatorImpl(),
   );
@@ -107,9 +107,8 @@ class FeedUserPickerPage extends StatelessWidget {
   const FeedUserPickerPage({super.key});
 
   @override
-  Widget build(BuildContext context) => _screens.createUserPickerScreen(
-    coordinator: const UserPickerCoordinatorImpl(),
-  );
+  Widget build(BuildContext context) =>
+      const UserPickerScreen(coordinator: UserPickerCoordinatorImpl());
 }
 
 @RoutePage()
@@ -117,9 +116,8 @@ class ContactsPage extends StatelessWidget {
   const ContactsPage({super.key});
 
   @override
-  Widget build(BuildContext context) => _screens.createContactsScreen(
-    coordinator: const ContactsCoordinatorImpl(),
-  );
+  Widget build(BuildContext context) =>
+      const ContactsScreen(coordinator: ContactsCoordinatorImpl());
 }
 
 /// The same profile screen as in the feed, with the other coordinator. This
@@ -134,7 +132,7 @@ class ContactsUserProfilePage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => _screens.createUserProfileScreen(
+  Widget build(BuildContext context) => UserProfileScreen(
     userId: userId,
     coordinator: const ContactsUserProfileCoordinatorImpl(),
   );
