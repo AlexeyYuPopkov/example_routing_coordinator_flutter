@@ -149,6 +149,22 @@ class FeedPostDetailsRouteArgs {
 }
 
 /// generated route for
+/// [FeedUserPickerPage]
+class FeedUserPickerRoute extends PageRouteInfo<void> {
+  const FeedUserPickerRoute({List<PageRouteInfo>? children})
+    : super(FeedUserPickerRoute.name, initialChildren: children);
+
+  static const String name = 'FeedUserPickerRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const FeedUserPickerPage();
+    },
+  );
+}
+
+/// generated route for
 /// [FeedUserPostsPage]
 class FeedUserPostsRoute extends PageRouteInfo<FeedUserPostsRouteArgs> {
   FeedUserPostsRoute({

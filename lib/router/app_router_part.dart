@@ -21,6 +21,22 @@ final class FeedPostDetailsCoordinatorImpl
   @override
   void onAuthorRoute(BuildContext context, {required String userId}) =>
       AutoRouter.of(context).push(FeedUserProfileRoute(userId: userId));
+
+  /// `push` is typed in what the pushed page is popped with, so a request
+  /// that answers back needs nothing special here.
+  @override
+  Future<User?> onPickUserRoute(BuildContext context) =>
+      AutoRouter.of(context).push<User>(const FeedUserPickerRoute());
+}
+
+/// Closing the picker is a decision, not a side effect of choosing, and it
+/// is taken here rather than inside the screen.
+final class UserPickerCoordinatorImpl implements UserPickerScreenCoordinator {
+  const UserPickerCoordinatorImpl();
+
+  @override
+  void onUserPickedRoute(BuildContext context, {required User user}) =>
+      AutoRouter.of(context).maybePop(user);
 }
 
 /// The profile inside the feed: the posts of an author belong to this same

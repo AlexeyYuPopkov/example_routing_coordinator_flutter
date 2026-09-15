@@ -13,6 +13,7 @@ final class AppRouterPath {
   static const String post = 'post/:postId';
   static const String user = 'user/:userId';
   static const String userPosts = 'user/:userId/posts';
+  static const String userPicker = 'pick_user';
 
   static String feedUserPosts(String userId) => '/feed/user/$userId/posts';
 }

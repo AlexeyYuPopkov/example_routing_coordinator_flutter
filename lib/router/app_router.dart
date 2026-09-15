@@ -1,11 +1,13 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:routing_coordinator_flutter/domain/model/user.dart';
 import 'package:routing_coordinator_flutter/router/app_pages.dart';
 import 'package:routing_coordinator_flutter/router/app_router_path.dart';
 import 'package:routing_coordinator_flutter/router/app_tabs.dart';
 import 'package:routing_coordinator_flutter/screens/contacts_screen.dart';
 import 'package:routing_coordinator_flutter/screens/post_details_screen.dart';
 import 'package:routing_coordinator_flutter/screens/post_list_screen.dart';
+import 'package:routing_coordinator_flutter/screens/user_picker_screen.dart';
 import 'package:routing_coordinator_flutter/screens/user_profile_screen.dart';
 
 part 'app_router.gr.dart';
@@ -38,6 +40,10 @@ class AppRouter extends RootStackRouter {
             AutoRoute(
               path: AppRouterPath.userPosts,
               page: FeedUserPostsRoute.page,
+            ),
+            AutoRoute(
+              path: AppRouterPath.userPicker,
+              page: FeedUserPickerRoute.page,
             ),
           ],
         ),

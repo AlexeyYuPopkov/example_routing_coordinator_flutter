@@ -100,6 +100,18 @@ class FeedUserProfilePage extends StatelessWidget {
   );
 }
 
+/// Opened to answer a question rather than to be browsed to, but it is
+/// still an ordinary page, so a deep link lands on it too.
+@RoutePage()
+class FeedUserPickerPage extends StatelessWidget {
+  const FeedUserPickerPage({super.key});
+
+  @override
+  Widget build(BuildContext context) => _screens.createUserPickerScreen(
+    coordinator: const UserPickerCoordinatorImpl(),
+  );
+}
+
 @RoutePage()
 class ContactsPage extends StatelessWidget {
   const ContactsPage({super.key});
