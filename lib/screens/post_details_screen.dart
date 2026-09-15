@@ -23,7 +23,7 @@ class PostDetailsScreen extends StatelessWidget {
     final author = repository.userById(post.authorId);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Пост')),
+      appBar: AppBar(title: const Text('Post')),
       body: ListView(
         children: [
           Padding(
@@ -40,8 +40,7 @@ class PostDetailsScreen extends StatelessWidget {
           const Divider(),
           UserTile(
             user: author,
-            onTap: () =>
-                coordinator.onAuthorRoute(context, userId: author.id),
+            onTap: () => coordinator.onAuthorRoute(context, userId: author.id),
           ),
         ],
       ),

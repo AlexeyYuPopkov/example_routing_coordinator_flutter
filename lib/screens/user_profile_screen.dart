@@ -26,7 +26,7 @@ class UserProfileScreen extends StatelessWidget {
     final postCount = repository.postsByAuthor(userId).length;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Профиль')),
+      appBar: AppBar(title: const Text('Profile')),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -45,7 +45,7 @@ class UserProfileScreen extends StatelessWidget {
             FilledButton.tonal(
               onPressed: () =>
                   coordinator.onUserPostsRoute(context, userId: userId),
-              child: Text('Посты пользователя ($postCount)'),
+              child: Text('Posts by this user ($postCount)'),
             ),
           ],
         ),

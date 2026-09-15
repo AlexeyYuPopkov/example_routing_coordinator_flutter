@@ -18,11 +18,7 @@ class PostListScreen extends StatelessWidget {
   final String? authorId;
   final PostListScreenCoordinator coordinator;
 
-  const PostListScreen({
-    super.key,
-    this.authorId,
-    required this.coordinator,
-  });
+  const PostListScreen({super.key, this.authorId, required this.coordinator});
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +29,7 @@ class PostListScreen extends StatelessWidget {
         : repository.postsByAuthor(author.id);
 
     return Scaffold(
-      appBar: AppBar(title: Text(author == null ? 'Лента' : author.name)),
+      appBar: AppBar(title: Text(author == null ? 'Feed' : author.name)),
       body: ListView.builder(
         itemCount: posts.length,
         itemBuilder: (context, index) {

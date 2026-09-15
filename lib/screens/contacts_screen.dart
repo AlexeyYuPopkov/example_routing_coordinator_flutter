@@ -16,7 +16,7 @@ class ContactsScreen extends StatelessWidget {
     final users = AppRepository.instance.users;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Контакты')),
+      appBar: AppBar(title: const Text('Contacts')),
       body: ListView.builder(
         itemCount: users.length,
         itemBuilder: (context, index) {
