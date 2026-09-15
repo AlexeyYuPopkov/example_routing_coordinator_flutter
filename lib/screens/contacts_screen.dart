@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:routing_coordinator_flutter/domain/repository/app_repository.dart';
 import 'package:routing_coordinator_flutter/ui/tiles.dart';
 
-sealed class ContactsRoute {
-  const ContactsRoute();
+sealed class ContactsScreenRoute {
+  const ContactsScreenRoute();
 }
 
-final class OpenUserProfileRoute extends ContactsRoute {
+final class OpenUserProfileRoute extends ContactsScreenRoute {
   final String userId;
 
   const OpenUserProfileRoute(this.userId);
 }
 
 class ContactsScreen extends StatelessWidget {
-  final ValueChanged<ContactsRoute> onRoute;
+  final ValueChanged<ContactsScreenRoute> onRoute;
 
   const ContactsScreen({super.key, required this.onRoute});
 

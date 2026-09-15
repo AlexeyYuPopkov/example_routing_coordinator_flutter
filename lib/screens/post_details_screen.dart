@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:routing_coordinator_flutter/domain/repository/app_repository.dart';
 import 'package:routing_coordinator_flutter/ui/tiles.dart';
 
-sealed class PostDetailsRoute {
-  const PostDetailsRoute();
+sealed class PostDetailsScreenRoute {
+  const PostDetailsScreenRoute();
 }
 
-final class OpenAuthorRoute extends PostDetailsRoute {
+final class OpenAuthorRoute extends PostDetailsScreenRoute {
   final String userId;
 
   const OpenAuthorRoute(this.userId);
@@ -14,7 +14,7 @@ final class OpenAuthorRoute extends PostDetailsRoute {
 
 class PostDetailsScreen extends StatelessWidget {
   final String postId;
-  final ValueChanged<PostDetailsRoute> onRoute;
+  final ValueChanged<PostDetailsScreenRoute> onRoute;
 
   const PostDetailsScreen({
     super.key,

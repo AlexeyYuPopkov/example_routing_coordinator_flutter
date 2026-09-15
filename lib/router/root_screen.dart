@@ -12,7 +12,7 @@ class RootScreen extends StatefulWidget {
   State<RootScreen> createState() => _RootScreenState();
 }
 
-class _RootScreenState extends State<RootScreen> implements TabSwitcher {
+class _RootScreenState extends State<RootScreen> {
   final _feedNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'feed');
   final _contactsNavigatorKey = GlobalKey<NavigatorState>(
     debugLabel: 'contacts',
@@ -24,12 +24,20 @@ class _RootScreenState extends State<RootScreen> implements TabSwitcher {
 
   late final _contactsTabRouter = ContactsTabRouter(
     navigatorKey: _contactsNavigatorKey,
-    tabSwitcher: this,
-    feedTabRouter: _feedTabRouter,
+    onRoute: _onContactsTabRoute,
   );
 
-  @override
-  void switchTo(AppTab tab) => setState(() => _currentTab = tab);
+  /// The last handler of the chain, and the only one that knows both tabs
+  /// exist, which is exactly what moving between them requires.
+  void _onContactsTabRoute(ContactsTabRoute route) {
+    switch (route) {
+      case UserPostsRoute(:final userId):
+        _switchTo(AppTab.feed);
+        _feedTabRouter.openUserPosts(userId);
+    }
+  }
+
+  void _switchTo(AppTab tab) => setState(() => _currentTab = tab);
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +57,7 @@ class _RootScreenState extends State<RootScreen> implements TabSwitcher {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentTab.index,
-        onDestinationSelected: (index) => switchTo(AppTab.values[index]),
+        onDestinationSelected: (index) => _switchTo(AppTab.values[index]),
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.article_outlined),

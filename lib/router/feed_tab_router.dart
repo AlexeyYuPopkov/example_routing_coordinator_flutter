@@ -14,30 +14,41 @@ final class FeedTabRouter {
   const FeedTabRouter({required this.navigatorKey});
 
   Widget buildRoot(BuildContext context) =>
-      PostListScreen(onRoute: _onPostListRoute);
+      PostListScreen(onRoute: _onPostListScreenRoute);
 
-  /// Also the entry point for the contacts tab, so that nobody outside has to
-  /// assemble a feed screen by hand.
-  void openUserPosts(String userId) =>
-      _push(PostListScreen(authorId: userId, onRoute: _onPostListRoute));
+  /// Also the entry point for the shell, which sends here the request that the
+  /// contacts tab could not answer on its own. Nobody outside assembles a feed
+  /// screen by hand.
+  void openUserPosts(String userId) {
+    final screen = PostListScreen(authorId: userId, onRoute: _onPostListScreenRoute);
+    _push(screen);
+  }
 
-  void _onPostListRoute(PostListRoute route) {
+  void _onPostListScreenRoute(PostListScreenRoute route) {
     switch (route) {
       case OpenPostRoute(:final postId):
-        _push(PostDetailsScreen(postId: postId, onRoute: _onPostDetailsRoute));
+        final screen = PostDetailsScreen(
+          postId: postId,
+          onRoute: _onPostDetailsScreenRoute,
+        );
+        _push(screen);
     }
   }
 
-  void _onPostDetailsRoute(PostDetailsRoute route) {
+  void _onPostDetailsScreenRoute(PostDetailsScreenRoute route) {
     switch (route) {
       case OpenAuthorRoute(:final userId):
-        _push(UserProfileScreen(userId: userId, onRoute: _onUserProfileRoute));
+        final screen = UserProfileScreen(
+          userId: userId,
+          onRoute: _onUserProfileScreenRoute,
+        );
+        _push(screen);
     }
   }
 
   /// Inside the feed the posts of an author belong to this same stack.
   /// The contacts tab answers the very same request differently.
-  void _onUserProfileRoute(UserProfileRoute route) {
+  void _onUserProfileScreenRoute(UserProfileScreenRoute route) {
     switch (route) {
       case OpenUserPostsRoute(:final userId):
         openUserPosts(userId);

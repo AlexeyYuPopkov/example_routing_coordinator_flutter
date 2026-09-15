@@ -7,11 +7,11 @@ import 'package:routing_coordinator_flutter/ui/tiles.dart';
 /// Declared next to the screen, because the screen is the expert on what its
 /// user can request. It is not the expert on what happens next, so the sealed
 /// class carries a request and no navigation at all.
-sealed class PostListRoute {
-  const PostListRoute();
+sealed class PostListScreenRoute {
+  const PostListScreenRoute();
 }
 
-final class OpenPostRoute extends PostListRoute {
+final class OpenPostRoute extends PostListScreenRoute {
   final String postId;
 
   const OpenPostRoute(this.postId);
@@ -22,7 +22,7 @@ final class OpenPostRoute extends PostListRoute {
 class PostListScreen extends StatelessWidget {
   /// When set, only the posts of that author are listed.
   final String? authorId;
-  final ValueChanged<PostListRoute> onRoute;
+  final ValueChanged<PostListScreenRoute> onRoute;
 
   const PostListScreen({super.key, this.authorId, required this.onRoute});
 

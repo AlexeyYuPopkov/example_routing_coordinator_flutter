@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:routing_coordinator_flutter/domain/repository/app_repository.dart';
 import 'package:routing_coordinator_flutter/ui/tiles.dart';
 
-sealed class UserProfileRoute {
-  const UserProfileRoute();
+sealed class UserProfileScreenRoute {
+  const UserProfileScreenRoute();
 }
 
-final class OpenUserPostsRoute extends UserProfileRoute {
+final class OpenUserPostsRoute extends UserProfileScreenRoute {
   final String userId;
 
   const OpenUserPostsRoute(this.userId);
@@ -17,7 +17,7 @@ final class OpenUserPostsRoute extends UserProfileRoute {
 /// the tab that owns the stack decides.
 class UserProfileScreen extends StatelessWidget {
   final String userId;
-  final ValueChanged<UserProfileRoute> onRoute;
+  final ValueChanged<UserProfileScreenRoute> onRoute;
 
   const UserProfileScreen({
     super.key,

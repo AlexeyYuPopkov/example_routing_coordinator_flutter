@@ -6,7 +6,7 @@ void main() {
   testWidgets('profile reports a request and navigates nowhere itself', (
     tester,
   ) async {
-    final requests = <UserProfileRoute>[];
+    final requests = <UserProfileScreenRoute>[];
 
     // No Navigator, no router, no app shell: the screen has no dependency on
     // any of them, which is the whole point of the callback.
