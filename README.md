@@ -28,6 +28,7 @@ master-detail stack.
 
 ```
 Feed     : post list -> post -> author profile -> posts by author -> post ...
+                          `-> pick a user, which answers back with one
 Contacts : people    -> profile -> posts by that person
 ```
 
@@ -46,6 +47,32 @@ In part 1 the same pattern appears twice. A screen reports what its user asked
 for and stops, because it is not the expert on what happens next. A tab router
 answers everything that belongs to its own stack, and reports the rest to the
 shell, which is the only place that knows both tabs exist.
+
+## Returning a result
+
+The post screen asks for a user and waits for the answer. The picker never pops
+itself: it reports who was picked, and the router decides that this ends the
+screen. Each branch carries the answer back its own way.
+
+| Branch | How the answer travels |
+| --- | --- |
+| `part-1-imperative` | A route case is generic in what it produces, so one callback still serves the whole family and stays typed |
+| `part-2-gorouter` | A coordinator method with its own return type, over `push<User>` |
+| `part-3-autoroute` | The same method, over a typed route object |
+
+## The same test on all three branches
+
+`test/app_navigation_test.dart` is byte for byte identical on every part
+branch. Check it yourself:
+
+```
+for b in part-1-imperative part-2-gorouter part-3-autoroute; do
+  git show "$b:test/app_navigation_test.dart" | shasum
+done
+```
+
+The three routing layers are interchangeable from the outside. The choice
+between them is about the shape of the code, not about what the app can do.
 
 ## Running it
 
