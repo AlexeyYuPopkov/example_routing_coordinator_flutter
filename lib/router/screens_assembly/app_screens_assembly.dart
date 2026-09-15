@@ -3,6 +3,7 @@ import 'package:routing_coordinator_flutter/router/screens_assembly/screens_asse
 import 'package:routing_coordinator_flutter/screens/contacts_screen.dart';
 import 'package:routing_coordinator_flutter/screens/post_details_screen.dart';
 import 'package:routing_coordinator_flutter/screens/post_list_screen.dart';
+import 'package:routing_coordinator_flutter/screens/user_picker_screen.dart';
 import 'package:routing_coordinator_flutter/screens/user_profile_screen.dart';
 
 final class AppScreensAssembly implements ScreensAssembly {
@@ -24,6 +25,11 @@ final class AppScreensAssembly implements ScreensAssembly {
   Widget createContactsScreen({
     required ContactsScreenCoordinator coordinator,
   }) => ContactsScreen(coordinator: coordinator);
+
+  @override
+  Widget createUserPickerScreen({
+    required UserPickerScreenCoordinator coordinator,
+  }) => UserPickerScreen(coordinator: coordinator);
 
   @override
   Widget createUserProfileScreen({

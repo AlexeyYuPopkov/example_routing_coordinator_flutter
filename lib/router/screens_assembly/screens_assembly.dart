@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:routing_coordinator_flutter/screens/contacts_screen.dart';
 import 'package:routing_coordinator_flutter/screens/post_details_screen.dart';
 import 'package:routing_coordinator_flutter/screens/post_list_screen.dart';
+import 'package:routing_coordinator_flutter/screens/user_picker_screen.dart';
 import 'package:routing_coordinator_flutter/screens/user_profile_screen.dart';
 
 /// Keeps the route tree free of concrete screen constructors.
@@ -21,6 +22,10 @@ abstract interface class ScreensAssembly {
   });
 
   Widget createContactsScreen({required ContactsScreenCoordinator coordinator});
+
+  Widget createUserPickerScreen({
+    required UserPickerScreenCoordinator coordinator,
+  });
 
   Widget createUserProfileScreen({
     required String userId,

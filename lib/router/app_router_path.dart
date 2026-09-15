@@ -12,6 +12,7 @@ final class AppRouterPath {
   static const String post = 'post/:postId';
   static const String user = 'user/:userId';
   static const String userPosts = 'user/:userId/posts';
+  static const String userPicker = 'pick_user';
 
   static String postIn(String branch, String postId) => '$branch/post/$postId';
 
@@ -19,6 +20,8 @@ final class AppRouterPath {
 
   static String userPostsIn(String branch, String userId) =>
       '$branch/user/$userId/posts';
+
+  static String userPickerIn(String branch) => '$branch/pick_user';
 }
 
 final class AppRouterParam {

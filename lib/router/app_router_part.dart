@@ -22,6 +22,23 @@ final class FeedPostDetailsCoordinatorImpl
       GoRouter.of(
         context,
       ).push(AppRouterPath.userIn(AppRouterPath.feed, userId));
+
+  /// `push` is a future of whatever the pushed location is popped with,
+  /// so a request that answers back needs nothing special here.
+  @override
+  Future<User?> onPickUserRoute(BuildContext context) => GoRouter.of(
+    context,
+  ).push<User>(AppRouterPath.userPickerIn(AppRouterPath.feed));
+}
+
+/// Closing the picker is a decision, not a side effect of choosing, and it
+/// is taken here rather than inside the screen.
+final class UserPickerCoordinatorImpl implements UserPickerScreenCoordinator {
+  const UserPickerCoordinatorImpl();
+
+  @override
+  void onUserPickedRoute(BuildContext context, {required User user}) =>
+      GoRouter.of(context).pop(user);
 }
 
 /// The profile inside the feed: the posts of an author belong to this same

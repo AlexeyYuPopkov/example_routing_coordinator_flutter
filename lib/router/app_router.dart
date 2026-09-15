@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:routing_coordinator_flutter/domain/model/user.dart';
 import 'package:routing_coordinator_flutter/router/app_router_path.dart';
 import 'package:routing_coordinator_flutter/router/root_screen.dart';
 import 'package:routing_coordinator_flutter/router/screens_assembly/app_screens_assembly.dart';
@@ -7,6 +8,7 @@ import 'package:routing_coordinator_flutter/router/screens_assembly/screens_asse
 import 'package:routing_coordinator_flutter/screens/contacts_screen.dart';
 import 'package:routing_coordinator_flutter/screens/post_details_screen.dart';
 import 'package:routing_coordinator_flutter/screens/post_list_screen.dart';
+import 'package:routing_coordinator_flutter/screens/user_picker_screen.dart';
 import 'package:routing_coordinator_flutter/screens/user_profile_screen.dart';
 
 part 'app_router_part.dart';
@@ -51,6 +53,14 @@ final class AppRouter {
         builder: (context, state) => _screensAssembly.createUserProfileScreen(
           userId: state.pathParameters[AppRouterParam.userId]!,
           coordinator: const FeedUserProfileCoordinatorImpl(),
+        ),
+      ),
+      // Opened to answer a question rather than to be browsed to, but it
+      // is still an ordinary location, so a deep link lands on it too.
+      GoRoute(
+        path: AppRouterPath.userPicker,
+        builder: (context, state) => _screensAssembly.createUserPickerScreen(
+          coordinator: const UserPickerCoordinatorImpl(),
         ),
       ),
       // The same screen as the branch root, with a filter and the very same
