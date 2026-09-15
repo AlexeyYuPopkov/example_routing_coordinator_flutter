@@ -22,7 +22,7 @@ class BranchPlaceholderApp extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.all(24),
             child: Text(
-              'Примеры живут в ветках:\n\n'
+              'The examples live on branches:\n\n'
               'part-1-imperative\n'
               'part-2-gorouter\n'
               'part-3-autoroute',
