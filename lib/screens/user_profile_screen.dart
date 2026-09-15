@@ -2,22 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:routing_coordinator_flutter/domain/repository/app_repository.dart';
 import 'package:routing_coordinator_flutter/ui/tiles.dart';
 
-sealed class UserProfileScreenRoute {
+sealed class UserProfileScreenRoute<T> {
   const UserProfileScreenRoute();
 }
 
-final class OpenUserPostsRoute extends UserProfileScreenRoute {
+final class OpenUserPostsRoute extends UserProfileScreenRoute<Never> {
   final String userId;
 
   const OpenUserPostsRoute(this.userId);
 }
+
+typedef OnUserProfileScreenRoute =
+    Future<T?> Function<T>(UserProfileScreenRoute<T> route);
 
 /// Opened from both tabs, and the request below means something different in
 /// each of them. The screen stays unaware of that: it reports the request and
 /// the tab that owns the stack decides.
 class UserProfileScreen extends StatelessWidget {
   final String userId;
-  final ValueChanged<UserProfileScreenRoute> onRoute;
+  final OnUserProfileScreenRoute onRoute;
 
   const UserProfileScreen({
     super.key,

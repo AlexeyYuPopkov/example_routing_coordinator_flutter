@@ -2,18 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:routing_coordinator_flutter/domain/repository/app_repository.dart';
 import 'package:routing_coordinator_flutter/ui/tiles.dart';
 
-sealed class ContactsScreenRoute {
+sealed class ContactsScreenRoute<T> {
   const ContactsScreenRoute();
 }
 
-final class OpenUserProfileRoute extends ContactsScreenRoute {
+final class OpenUserProfileRoute extends ContactsScreenRoute<Never> {
   final String userId;
 
   const OpenUserProfileRoute(this.userId);
 }
 
+typedef OnContactsScreenRoute =
+    Future<T?> Function<T>(ContactsScreenRoute<T> route);
+
 class ContactsScreen extends StatelessWidget {
-  final ValueChanged<ContactsScreenRoute> onRoute;
+  final OnContactsScreenRoute onRoute;
 
   const ContactsScreen({super.key, required this.onRoute});
 

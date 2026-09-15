@@ -5,24 +5,29 @@ import 'package:routing_coordinator_flutter/ui/tiles.dart';
 /// Everything this screen can ask the app to do.
 ///
 /// Declared next to the screen, because the screen is the expert on what its
-/// user can request. It is not the expert on what happens next, so the sealed
-/// class carries a request and no navigation at all.
-sealed class PostListScreenRoute {
+/// user can request. It is not the expert on what happens next, so a case
+/// carries a request and no navigation at all.
+///
+/// The type argument says what the request gives back. [Never] means nothing.
+sealed class PostListScreenRoute<T> {
   const PostListScreenRoute();
 }
 
-final class OpenPostRoute extends PostListScreenRoute {
+final class OpenPostRoute extends PostListScreenRoute<Never> {
   final String postId;
 
   const OpenPostRoute(this.postId);
 }
+
+typedef OnPostListScreenRoute =
+    Future<T?> Function<T>(PostListScreenRoute<T> route);
 
 /// Used twice: as the root of the feed tab, and filtered by author when opened
 /// from a profile. The two call sites pass different [onRoute] callbacks.
 class PostListScreen extends StatelessWidget {
   /// When set, only the posts of that author are listed.
   final String? authorId;
-  final ValueChanged<PostListScreenRoute> onRoute;
+  final OnPostListScreenRoute onRoute;
 
   const PostListScreen({super.key, this.authorId, required this.onRoute});
 
