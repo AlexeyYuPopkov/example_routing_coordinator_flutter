@@ -1,47 +1,53 @@
 # Routing. Coordinator
 
-Демо-проект к статье «Flutter tips. Routing. Coordinator» о том, как вынести
-переходы между экранами из реализации самих экранов.
+Demo project for the article "Flutter tips. Routing. Coordinator", about
+moving transitions between screens out of the screens themselves.
 
-## Ветки
+## Branches
 
-| Ветка | Что показывает |
+| Branch | What it shows |
 | --- | --- |
-| `main` | Общая база: домен, данные, презентационные виджеты. Роутинга нет. |
-| `part-1-imperative` | Императивный роутинг. В экран инжектится колбэк, его параметр это sealed-класс перехода. |
-| `part-2-gorouter` | Декларативный роутинг на go_router плюс паттерн «координатор». |
-| `part-3-autoroute` | То же самое на auto_route. Ответвлена от `part-2-gorouter`. |
+| `main` | The shared base: domain, data, presentational widgets. No routing. |
+| `part-1-imperative` | Imperative routing. A screen is given a callback whose parameter is a sealed class of transitions. |
+| `part-2-gorouter` | Declarative routing on go_router, plus the coordinator pattern. |
+| `part-3-autoroute` | The same on auto_route. Branched off `part-2-gorouter`. |
 
-Ветка `part-3-autoroute` ответвлена от `part-2-gorouter` намеренно. Команда
+Branching `part-3-autoroute` off `part-2-gorouter` is deliberate. The command
 
 ```
 git diff part-2-gorouter..part-3-autoroute
 ```
 
-показывает ровно слой роутинга и ничего больше: экраны и их контракты в обеих
-ветках совпадают дословно.
+shows the routing layer and nothing else: the screens and their contracts are
+word for word the same in both branches.
 
-## Демо-приложение
+## The demo app
 
-Нижний таб-бар, две вкладки, в каждой свой `Navigator` и свой стек master-detail.
+A bottom bar with two tabs, each with its own `Navigator` and its own
+master-detail stack.
 
 ```
-Лента      : список постов -> пост -> профиль автора -> посты автора -> пост ...
-Контакты   : список людей  -> профиль -> посты автора
+Feed     : post list -> post -> author profile -> posts by author -> post ...
+Contacts : people    -> profile -> posts by that person
 ```
 
-Экран профиля переиспользуется обеими вкладками, и ведёт себя в них по-разному.
+The profile screen is shared by both tabs and behaves differently in each.
 
-| Откуда открыт профиль | Что делает кнопка «Посты пользователя» |
+| Where the profile was opened | What "Posts by this user" does |
 | --- | --- |
-| Лента | Кладёт список постов в стек той же вкладки |
-| Контакты | Переключает на вкладку «Лента» и открывает список там |
+| Feed | Pushes the list onto the stack of the same tab |
+| Contacts | Switches to the Feed tab and opens the list there |
 
-Экран при этом один и тот же. Разной остаётся только реализация координатора
-(части 2 и 3) или реализация колбэка (часть 1), которую экран получает снаружи.
-Это и есть главная мысль статьи в наименьшем возможном объёме кода.
+The screen is the same one either way. What differs is the implementation it
+is handed from the outside: a coordinator in parts 2 and 3, a callback in
+part 1. That is the whole point of the article, in the least code it takes.
 
-## Запуск
+In part 1 the same pattern appears twice. A screen reports what its user asked
+for and stops, because it is not the expert on what happens next. A tab router
+answers everything that belongs to its own stack, and reports the rest to the
+shell, which is the only place that knows both tabs exist.
+
+## Running it
 
 ```
 git switch part-2-gorouter
@@ -49,13 +55,13 @@ flutter pub get
 flutter run
 ```
 
-Ветка `part-3-autoroute` дополнительно требует кодогенерации:
+Branch `part-3-autoroute` needs code generation first:
 
 ```
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 ```
 
-## Папка `reference`
+## The `reference` folder
 
-Выдержки из боевого проекта, послужившие источником паттернов. В сборку не
-входят и исключены из анализатора.
+Excerpts from a production project, the source of these patterns. They are not
+part of the build and are excluded from the analyzer.
