@@ -20,7 +20,10 @@ final class FeedTabRouter {
   /// contacts tab could not answer on its own. Nobody outside assembles a feed
   /// screen by hand.
   void openUserPosts(String userId) {
-    final screen = PostListScreen(authorId: userId, onRoute: _onPostListScreenRoute);
+    final screen = PostListScreen(
+      authorId: userId,
+      onRoute: _onPostListScreenRoute,
+    );
     _push(screen);
   }
 

@@ -35,7 +35,7 @@ class PostListScreen extends StatelessWidget {
         : repository.postsByAuthor(author.id);
 
     return Scaffold(
-      appBar: AppBar(title: Text(author == null ? 'Лента' : author.name)),
+      appBar: AppBar(title: Text(author == null ? 'Feed' : author.name)),
       body: ListView.builder(
         itemCount: posts.length,
         itemBuilder: (context, index) {

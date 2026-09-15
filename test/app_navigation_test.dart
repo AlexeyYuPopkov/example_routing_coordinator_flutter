@@ -7,19 +7,19 @@ void main() {
   ) async {
     await tester.pumpWidget(const App());
 
-    await tester.tap(find.text('Заметки к машине Бэббиджа'));
+    await tester.tap(find.text('Notes on the Analytical Engine'));
     await tester.pumpAndSettle();
-    expect(find.text('Пост'), findsOneWidget);
+    expect(find.text('Post'), findsOneWidget);
 
     await tester.tap(find.text('Ada Lovelace'));
     await tester.pumpAndSettle();
-    expect(find.text('Профиль'), findsOneWidget);
+    expect(find.text('Profile'), findsOneWidget);
 
-    await tester.tap(find.textContaining('Посты пользователя'));
+    await tester.tap(find.textContaining('Posts by this user'));
     await tester.pumpAndSettle();
 
     expect(find.text('Ada Lovelace'), findsWidgets);
-    expect(find.text('Алгоритм как объект'), findsOneWidget);
+    expect(find.text('An algorithm is an object'), findsOneWidget);
   });
 
   testWidgets('the same request from contacts switches to the feed tab', (
@@ -27,18 +27,18 @@ void main() {
   ) async {
     await tester.pumpWidget(const App());
 
-    await tester.tap(find.text('Контакты'));
+    await tester.tap(find.text('Contacts'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Grace Hopper'));
     await tester.pumpAndSettle();
-    expect(find.text('Профиль'), findsOneWidget);
+    expect(find.text('Profile'), findsOneWidget);
 
-    await tester.tap(find.textContaining('Посты пользователя'));
+    await tester.tap(find.textContaining('Posts by this user'));
     await tester.pumpAndSettle();
 
     // The list opened in the feed tab, so the contacts tab is no longer shown.
-    expect(find.text('Первый баг'), findsOneWidget);
-    expect(find.text('Профиль'), findsNothing);
+    expect(find.text('The first bug'), findsOneWidget);
+    expect(find.text('Profile'), findsNothing);
   });
 }

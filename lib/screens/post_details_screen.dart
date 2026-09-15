@@ -29,7 +29,7 @@ class PostDetailsScreen extends StatelessWidget {
     final author = repository.userById(post.authorId);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Пост')),
+      appBar: AppBar(title: const Text('Post')),
       body: ListView(
         children: [
           Padding(

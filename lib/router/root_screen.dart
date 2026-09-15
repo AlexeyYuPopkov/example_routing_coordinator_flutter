@@ -62,12 +62,12 @@ class _RootScreenState extends State<RootScreen> {
           NavigationDestination(
             icon: Icon(Icons.article_outlined),
             selectedIcon: Icon(Icons.article),
-            label: 'Лента',
+            label: 'Feed',
           ),
           NavigationDestination(
             icon: Icon(Icons.people_outline),
             selectedIcon: Icon(Icons.people),
-            label: 'Контакты',
+            label: 'Contacts',
           ),
         ],
       ),
