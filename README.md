@@ -92,7 +92,7 @@ branch. Check it yourself:
 
 ```
 for b in part-1-imperative part-2-gorouter part-3-autoroute; do
-  git show "$b:test/app_navigation_test.dart" | shasum
+  git show "${b}:test/app_navigation_test.dart" | shasum
 done
 ```
 
