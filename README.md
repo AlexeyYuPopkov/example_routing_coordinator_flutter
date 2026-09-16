@@ -15,11 +15,12 @@ moving transitions between screens out of the screens themselves.
 Branching `part-3-autoroute` off `part-2-gorouter` is deliberate. The command
 
 ```
-git diff part-2-gorouter..part-3-autoroute
+git diff part-2-gorouter..part-3-autoroute -- lib ':!*.gr.dart'
 ```
 
 shows the routing layer and nothing else: the screens and their contracts are
-word for word the same in both branches.
+word for word the same in both branches. The pathspec leaves out the generated
+`app_router.gr.dart`, which would otherwise bury the diff.
 
 ## The demo app
 
@@ -60,6 +61,30 @@ screen. Each branch carries the answer back its own way.
 | `part-2-gorouter` | A coordinator method with its own return type, over `push<User>` |
 | `part-3-autoroute` | The same method, over a typed route object |
 
+## The same three files on every branch
+
+Whichever library is underneath, the routing lives in the same three files:
+
+```
+lib/router/
+  app_router.dart            the whole tree, the only place that knows both tabs
+  feed_tab_router.dart       everything the feed tab can show and do
+  contacts_tab_router.dart   the same for contacts
+```
+
+What sits inside a tab file is what changes from branch to branch, and that
+difference is the article:
+
+| Branch | Inside a tab file |
+| --- | --- |
+| `part-1-imperative` | The screens of the tab, and the transition each request leads to |
+| `part-2-gorouter` | The routes of the tab, and the coordinators that answer its screens |
+| `part-3-autoroute` | The pages and routes of the tab, and the same coordinators |
+
+The rest of `lib/router` is whatever the approach needs of its own: the shell
+screen, the `Navigator` plumbing in part 1, the paths in parts 2 and 3, and the
+generated `app_router.gr.dart` in part 3.
+
 ## The same test on all three branches
 
 `test/app_navigation_test.dart` is byte for byte identical on every part
@@ -82,7 +107,8 @@ flutter pub get
 flutter run
 ```
 
-Branch `part-3-autoroute` needs code generation first:
+`app_router.gr.dart` is committed, so `part-3-autoroute` runs the same way.
+Regenerate it after changing anything the generator reads:
 
 ```
 dart run build_runner build
