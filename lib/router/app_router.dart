@@ -9,6 +9,7 @@ import 'package:routing_coordinator_flutter/router/root_screen.dart';
 final class AppRouter {
   late final GoRouter router = GoRouter(
     initialLocation: AppRouterPath.feed,
+    debugLogDiagnostics: true,
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
