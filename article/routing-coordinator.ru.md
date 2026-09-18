@@ -311,15 +311,64 @@ final class FeedTabRouter with TabRouter {
 направления, к которым этот экран ведёт. Список постов открывает пост, пост —
 профиль автора или экран выбора пользователя, профиль — список постов автора.
 
+### contacts_tab_router.dart
+
+Вкладка контактов устроена так же, но один из запросов она обслужить не может:
+посты автора принадлежат другой вкладке. Поэтому она объявляет собственный
+перечень запросов и передаёт такой запрос выше — тому, кто знает обе вкладки.
+
+```dart
+sealed class ContactsTabRoute<T> {
+  const ContactsTabRoute();
+}
+
+final class UserPostsRoute extends ContactsTabRoute<Never> {
+  final String userId;
+
+  const UserPostsRoute(this.userId);
+}
+
+typedef OnContactsTabRoute = Future<T?> Function<T>(ContactsTabRoute<T> route);
+
+final class ContactsTabRouter with TabRouter {
+  ...
+
+  final OnContactsTabRoute onRoute;
+
+  @override
+  Widget buildRoot(BuildContext context) => _contacts();
+
+  Widget _contacts() => ContactsScreen(...);
+
+  /// Тот же экран и тот же запрос, что и во вкладке ленты, но ответ другой:
+  /// там посты остаются в стеке, здесь запрос уходит выше.
+  Widget _userProfile(String userId) => UserProfileScreen(
+    userId: userId,
+    onRoute: <T>(route) async {
+      switch (route) {
+        case OpenUserPostsRoute(:final userId):
+          onRoute(UserPostsRoute(userId));
+          return null;
+      }
+    },
+  );
+}
+```
+
+Экран профиля здесь тот же самый, что и в ленте, и запрос от него приходит тот
+же. Различается только ответ, и находится он в файле вкладки — рядом с
+остальными её переходами.
+
 ### Почему это наглядно
 
-Навигация читается сверху вниз по четырём файлам, и на каждом уровне видно
-ровно тот слой, за который этот уровень отвечает:
+Навигация читается сверху вниз по файлам, и на каждом уровне видно ровно тот
+слой, за который этот уровень отвечает:
 
 - `main.dart` — приложение и корневой экран;
 - `root_screen.dart` — две вкладки и переключение между ними;
 - `app_router.dart` — обе вкладки целиком и переходы между ними;
-- `feed_tab_router.dart` — все экраны вкладки и переходы внутри неё.
+- `feed_tab_router.dart`, `contacts_tab_router.dart` — все экраны вкладки и
+  переходы внутри неё.
 
 То, что уровню неизвестно, он не обрабатывает, а делегирует выше: экран
 сообщает о запросе роутеру вкладки, роутер вкладки — `AppRouter`, если запрос
@@ -328,37 +377,87 @@ final class FeedTabRouter with TabRouter {
 
 ---
 
-## Часть 2. go_router: координатор как интерфейс
+## Часть 2. go_router
 
-Декларативный роутер меняет картину: есть дерево локаций, и переход — это
-переход к локации. Приём тот же, меняется форма контракта.
+Здесь есть дерево локаций, и переход — это переход к локации. Приём тот же,
+меняется форма контракта: вместо колбэка экран принимает абстрактный интерфейс.
+Колбэк здесь не даёт синтаксического выигрыша: обработчик всё равно не пишется
+в месте объявления локации, поскольку построение экрана и реакция на нажатие
+разнесены по разным местам дерева.
 
-### Контракт экрана
+Порядок файлов тот же.
 
-Вместо sealed-класса и колбэка — интерфейс, объявленный рядом с экраном:
+### main.dart
 
 ```dart
-abstract interface class PostListScreenCoordinator {
-  void onPostRoute(BuildContext context, {required String postId});
+void main() => runApp(App(appRouter: AppRouter()));
+
+class App extends StatelessWidget {
+  final AppRouter appRouter;
+
+  const App({super.key, required this.appRouter});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      ...
+      routerConfig: appRouter.router,
+    );
+  }
 }
 ```
 
-Запрос с ответом — метод с типом возвращаемого значения, без обобщения по
-всему семейству:
+### root_screen.dart
 
 ```dart
-abstract interface class PostDetailsScreenCoordinator {
-  void onAuthorRoute(BuildContext context, {required String userId});
+class RootScreen extends StatelessWidget {
+  final StatefulNavigationShell navigationShell;
 
-  Future<User?> onPickUserRoute(BuildContext context);
+  const RootScreen({super.key, required this.navigationShell});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: navigationShell,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: navigationShell.currentIndex,
+        onDestinationSelected: (index) => navigationShell.goBranch(
+          index,
+          initialLocation: index == navigationShell.currentIndex,
+        ),
+        destinations: const [...],
+      ),
+    );
+  }
 }
 ```
 
-### Роутер вкладки — карта переходов
+Корневой экран отвечает за переключение вкладок и не знает, что внутри них.
 
-Файл вкладки устроен в два яруса: сверху дерево локаций, снизу ответы на
-запросы её экранов. Дерево читается как карта, реализации — как список
-переходов, к которым эта карта ведёт.
+### app_router.dart
+
+```dart
+final class AppRouter {
+  late final GoRouter router = GoRouter(
+    initialLocation: AppRouterPath.feed,
+    routes: [
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            RootScreen(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(routes: [feedTabRoute]),
+          StatefulShellBranch(routes: [contactsTabRoute]),
+        ],
+      ),
+    ],
+  );
+}
+```
+
+Две ветки, у каждой свой стек. Переход между вкладками отдельной обработки не
+требует: локация принадлежит другой ветке, и оболочка переключает вкладку сама.
+
+### feed_tab_router.dart
 
 ```dart
 GoRoute get feedTabRoute => GoRoute(
@@ -380,15 +479,11 @@ GoRoute get feedTabRoute => GoRoute(
         coordinator: const FeedUserProfileCoordinatorImpl(),
       ),
     ),
-    // Открывается, чтобы ответить на запрос, но остаётся обычной
-    // локацией — на неё можно прийти и по диплинку.
     GoRoute(
       path: AppRouterPath.userPicker,
       builder: (context, state) =>
           const UserPickerScreen(coordinator: UserPickerCoordinatorImpl()),
     ),
-    // Тот же экран, что и в корне вкладки, с фильтром по автору
-    // и тем же координатором.
     GoRoute(
       path: AppRouterPath.userPosts,
       builder: (context, state) => PostListScreen(
@@ -410,59 +505,14 @@ final class FeedPostListCoordinatorImpl implements PostListScreenCoordinator {
 
 final class FeedPostDetailsCoordinatorImpl
     implements PostDetailsScreenCoordinator {
-  const FeedPostDetailsCoordinatorImpl();
+  ...
 
-  @override
-  void onAuthorRoute(BuildContext context, {required String userId}) =>
-      GoRouter.of(context)
-          .push(AppRouterPath.userIn(AppRouterPath.feed, userId));
-
-  /// `push` возвращает future того, чем локацию закрыли, поэтому запрос
-  /// с ответом не требует ничего дополнительного.
   @override
   Future<User?> onPickUserRoute(BuildContext context) => GoRouter.of(context)
       .push<User>(AppRouterPath.userPickerIn(AppRouterPath.feed));
 }
 
-/// Закрытие экрана выбора — решение координатора, а не следствие выбора.
-final class UserPickerCoordinatorImpl implements UserPickerScreenCoordinator {
-  const UserPickerCoordinatorImpl();
-
-  @override
-  void onUserPickedRoute(BuildContext context, {required User user}) =>
-      GoRouter.of(context).pop(user);
-}
-```
-
-Дерево локаций и ответы на запросы лежат рядом, поэтому по одному файлу видно
-и что вкладка показывает, и что происходит при каждом нажатии.
-
-Сами вкладки объявлены в корневом файле:
-
-```dart
-StatefulShellRoute.indexedStack(
-  builder: (context, state, navigationShell) =>
-      RootScreen(navigationShell: navigationShell),
-  branches: [
-    StatefulShellBranch(routes: [feedTabRoute]),
-    StatefulShellBranch(routes: [contactsTabRoute]),
-  ],
-)
-```
-
-### Одно требование, две реализации
-
-Экран профиля один, интерфейс один:
-
-```dart
-abstract interface class UserProfileScreenCoordinator {
-  void onUserPostsRoute(BuildContext context, {required String userId});
-}
-```
-
-В файле вкладки Feed посты автора остаются в том же стеке — `push`:
-
-```dart
+/// В ленте посты автора остаются в том же стеке — `push`.
 final class FeedUserProfileCoordinatorImpl
     implements UserProfileScreenCoordinator {
   const FeedUserProfileCoordinatorImpl();
@@ -472,11 +522,46 @@ final class FeedUserProfileCoordinatorImpl
       GoRouter.of(context)
           .push(AppRouterPath.userPostsIn(AppRouterPath.feed, userId));
 }
+
+...
 ```
 
-В файле вкладки Contacts — `go`:
+Файл вкладки состоит из двух ярусов: сверху дерево локаций, снизу реализации
+интерфейсов её экранов.
+
+### contacts_tab_router.dart
+
+Файл вкладки контактов устроен точно так же и целиком помещается на экран:
 
 ```dart
+GoRoute get contactsTabRoute => GoRoute(
+  path: AppRouterPath.contacts,
+  builder: (context, state) =>
+      const ContactsScreen(coordinator: ContactsCoordinatorImpl()),
+  routes: [
+    // Тот же экран профиля, что и в ленте, с другой реализацией.
+    GoRoute(
+      path: AppRouterPath.user,
+      builder: (context, state) => UserProfileScreen(
+        userId: state.pathParameters[AppRouterParam.userId]!,
+        coordinator: const ContactsUserProfileCoordinatorImpl(),
+      ),
+    ),
+  ],
+);
+
+final class ContactsCoordinatorImpl implements ContactsScreenCoordinator {
+  const ContactsCoordinatorImpl();
+
+  @override
+  void onUserProfileRoute(BuildContext context, {required String userId}) =>
+      GoRouter.of(context)
+          .push(AppRouterPath.userIn(AppRouterPath.contacts, userId));
+}
+
+/// Тот же экран и тот же запрос, что и во вкладке ленты, но ответ другой.
+/// `go` вместо `push`: локация принадлежит другой ветке, поэтому оболочка
+/// переключает вкладку сама, а стек контактов остаётся на месте.
 final class ContactsUserProfileCoordinatorImpl
     implements UserProfileScreenCoordinator {
   const ContactsUserProfileCoordinatorImpl();
@@ -488,25 +573,101 @@ final class ContactsUserProfileCoordinatorImpl
 }
 ```
 
-Локация принадлежит другой ветке, поэтому оболочка переключает вкладку сама, а
-стек контактов остаётся на месте. Разница между двумя требованиями — одно слово
-в одном классе; экран не изменился.
+Два файла вкладок устроены одинаково, экран профиля в них один и тот же, а всё
+различие требований — одно слово в одной реализации: `push` в ленте, `go` в
+контактах.
+
+### Почему это наглядно
+
+Порядок чтения сохраняется, и на каждом уровне видно ровно свой слой:
+
+- `main.dart` — приложение и конфигурация роутера;
+- `root_screen.dart` — две вкладки и переключение между ними;
+- `app_router.dart` — обе ветки дерева;
+- `feed_tab_router.dart`, `contacts_tab_router.dart` — все локации вкладки и
+  ответы на запросы её экранов.
+
+Разница с частью 1 в том, что делегировать запрос вверх не требуется: переход в
+чужую вкладку — это обычная локация, и различие между вкладками выражается
+одним словом в одной реализации.
 
 ---
 
-## Часть 3. auto_route: то же самое с кодогенерацией
+## Часть 3. auto_route
 
-Третья ветка отличается от второй только слоем роутинга: экраны и их контракты
-в ней те же самые, до буквы.
+Экраны и их контракты полностью совпадают с частью 2. Отличия два: пункт
+назначения — сгенерированный объект, а не строка, и между экраном и роутером
+появляется слой страниц, который удерживает аннотации генератора вне экранов.
 
-Отличий два. Пункт назначения — не строка, а сгенерированный объект, поэтому
-пропущенный или опечатанный аргумент становится ошибкой компиляции. И между
-экраном и роутером появляется слой страниц: он удерживает аннотации генератора
-вне экранов.
+Порядок файлов тот же.
 
-### Роутер вкладки — карта переходов
+### main.dart
 
-Файл вкладки устроен в три яруса: дерево локаций, страницы, ответы на запросы.
+```dart
+void main() => runApp(App(appRouter: AppRouter()));
+
+class App extends StatelessWidget {
+  final AppRouter appRouter;
+
+  const App({super.key, required this.appRouter});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      ...
+      routerConfig: appRouter.config(),
+    );
+  }
+}
+```
+
+### root_page.dart
+
+```dart
+@RoutePage()
+class RootPage extends StatelessWidget {
+  const RootPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AutoTabsScaffold(
+      routes: [feedTab(), contactsTab()],
+      bottomNavigationBuilder: (context, tabsRouter) => NavigationBar(
+        selectedIndex: tabsRouter.activeIndex,
+        onDestinationSelected: tabsRouter.setActiveIndex,
+        destinations: const [...],
+      ),
+    );
+  }
+}
+```
+
+Сами вкладки — пустые вложенные роутеры, собственных виджетов им не требуется:
+
+```dart
+// app_tabs.dart
+const feedTab = EmptyShellRoute('FeedTab');
+const contactsTab = EmptyShellRoute('ContactsTab');
+```
+
+### app_router.dart
+
+```dart
+@AutoRouterConfig()
+class AppRouter extends RootStackRouter {
+  @override
+  List<AutoRoute> get routes => [
+    AutoRoute(
+      path: AppRouterPath.root,
+      page: RootRoute.page,
+      initial: true,
+      children: [feedTabRoute, contactsTabRoute],
+    ),
+  ];
+}
+```
+
+### feed_tab_router.dart
 
 ```dart
 AutoRoute get feedTabRoute => AutoRoute(
@@ -537,6 +698,8 @@ class FeedUserProfilePage extends StatelessWidget {
   );
 }
 
+...
+
 final class FeedUserProfileCoordinatorImpl
     implements UserProfileScreenCoordinator {
   const FeedUserProfileCoordinatorImpl();
@@ -545,30 +708,19 @@ final class FeedUserProfileCoordinatorImpl
   void onUserPostsRoute(BuildContext context, {required String userId}) =>
       AutoRouter.of(context).push(FeedUserPostsRoute(userId: userId));
 }
+
+...
 ```
 
-Верхний ярус — карта вкладки: пять локаций, каждая ссылается на
-сгенерированный объект страницы. Средний — страницы: каждая связывает экран с
-координатором, который ему полагается. Нижний — координаторы, отвечающие на
-запросы экранов. Порядок чтения тот же, что в части 2, добавился только слой
-страниц.
+Ярусов здесь три: дерево локаций, страницы и реализации интерфейсов. Страница
+связывает экран с той реализацией, которая ему полагается в этой вкладке.
 
-Запрос с ответом устроен так же, как в go_router, — `push` типизирован тем,
-чем экран будет закрыт:
+Переход в другую вкладку требует отдельного решения: вложенный стековый роутер
+не может добавить экран в соседнюю вкладку, поэтому навигируется корневой
+роутер, а нужную вкладку auto_route активирует сам.
 
 ```dart
-@override
-Future<User?> onPickUserRoute(BuildContext context) =>
-    AutoRouter.of(context).push<User>(const FeedUserPickerRoute());
-```
-
-### Переход в другую вкладку
-
-Вложенный стековый роутер не может добавить экран в соседнюю вкладку. Поэтому
-координатор вкладки Contacts навигирует корневой роутер по пути, а auto_route
-активирует нужную вкладку сам:
-
-```dart
+// contacts_tab_router.dart
 final class ContactsUserProfileCoordinatorImpl
     implements UserProfileScreenCoordinator {
   const ContactsUserProfileCoordinatorImpl();
@@ -581,7 +733,18 @@ final class ContactsUserProfileCoordinatorImpl
 }
 ```
 
-Механика другая, требование то же, экран не изменился.
+### Почему это наглядно
+
+Порядок чтения не изменился:
+
+- `main.dart` — приложение и конфигурация роутера;
+- `root_page.dart` — две вкладки и переключение между ними;
+- `app_router.dart` — дерево целиком;
+- `feed_tab_router.dart` — локации вкладки, её страницы и ответы на запросы
+  экранов.
+
+Кодогенерация добавляет слой страниц, но не меняет ни порядок чтения, ни
+распределение ответственности между уровнями.
 
 ---
 
