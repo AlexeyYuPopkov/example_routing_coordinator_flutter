@@ -1,6 +1,4 @@
-# Flutter tips. Routing. Coordinator
-
-*Черновик. Код: [routing_coordinator_flutter](https://github.com/), ветки `part-1-imperative`, `part-2-gorouter`, `part-3-autoroute`.*
+# Flutter tips. Routing. Coordinator. Refactoring
 
 ## Введение
 
@@ -83,12 +81,22 @@ FilledButton.tonal(
 
 ## Приложение-пример
 
-Код примера находится в репозитории
-[example_routing_coordinator_flutter](https://github.com/AlexeyYuPopkov/example_routing_coordinator_flutter).
-Каждая реализация вынесена в отдельную ветку: `part-1-imperative`,
-`part-2-gorouter`, `part-3-autoroute`. Ветка `main` содержит общую часть —
-модели, репозиторий и презентационные виджеты — без навигации. Приложение во
-всех ветках одинаковое, различается только слой навигации.
+Код примера находится в репозитории [5]. Каждая реализация вынесена в отдельную
+ветку: `part-1-imperative`, `part-2-gorouter`, `part-3-autoroute`. Ветка `main`
+содержит общую часть — модели, репозиторий и презентационные виджеты — без
+навигации. Приложение во всех ветках одинаковое, различается только слой
+навигации.
+
+Во всех трёх ветках навигация размещена в одних и тех же файлах:
+
+```
+lib/router/
+  app_router.dart            дерево приложения; единственное место,
+                             которому известны обе вкладки
+  feed_tab_router.dart       переходы вкладки Feed и ответы на запросы
+                             её экранов
+  contacts_tab_router.dart   то же для вкладки Contacts
+```
 
 Приложение состоит из двух вкладок, у каждой свой `Navigator` и свой стек:
 
@@ -359,7 +367,7 @@ final class ContactsTabRouter with TabRouter {
 же. Различается только ответ, и находится он в файле вкладки — рядом с
 остальными её переходами.
 
-### Почему это наглядно
+### Порядок чтения
 
 Навигация читается сверху вниз по файлам, и на каждом уровне видно ровно тот
 слой, за который этот уровень отвечает:
@@ -577,7 +585,7 @@ final class ContactsUserProfileCoordinatorImpl
 различие требований — одно слово в одной реализации: `push` в ленте, `go` в
 контактах.
 
-### Почему это наглядно
+### Порядок чтения
 
 Порядок чтения сохраняется, и на каждом уровне видно ровно свой слой:
 
@@ -733,7 +741,7 @@ final class ContactsUserProfileCoordinatorImpl
 }
 ```
 
-### Почему это наглядно
+### Порядок чтения
 
 Порядок чтения не изменился:
 
@@ -748,117 +756,26 @@ final class ContactsUserProfileCoordinatorImpl
 
 ---
 
-## Один тест на три ветки
+## Применимость
 
-Файл `test/app_navigation_test.dart` побайтово одинаков во всех трёх ветках:
+Приём не привязан к конкретной библиотеке. Экран сообщает о запросе
+пользователя; решение принимает тот, у кого есть необходимая для этого
+информация. Форма контракта — колбэк или абстрактный интерфейс — и механика
+перехода определяются выбранным инструментом, но распределение ответственности
+остаётся прежним. В статье показаны три реализации — на штатном `Navigator`, на
+go_router и на auto_route, — и тем же образом приём применяется к любому
+другому пакету или к Router API напрямую.
 
-```
-for b in part-1-imperative part-2-gorouter part-3-autoroute; do
-  git show "${b}:test/app_navigation_test.dart" | shasum
-done
-```
+Отсюда следует практическое свойство: подход пригоден для постепенного
+рефакторинга. Переходы выносятся из экранов по одному экрану за раз, без смены
+библиотеки навигации и без изменения остальной части приложения. Каждый такой
+шаг самодостаточен — экран перестаёт зависеть от того, куда он ведёт, и
+становится пригоден для повторного использования в другом контексте. Побочный
+результат: такой экран проверяется без роутера, поскольку вместо реализации
+перехода ему передаётся заглушка.
 
-Внутри — сценарий от лица пользователя, проверяющий требование из таблицы выше:
-
-```dart
-testWidgets('the same request from contacts switches to the feed tab', (
-  tester,
-) async {
-  await tester.pumpWidget(App(appRouter: AppRouter()));
-  await tester.pumpAndSettle();
-
-  await tester.tap(find.text('Contacts'));
-  await tester.pumpAndSettle();
-
-  await tester.tap(find.text('Grace Hopper'));
-  await tester.pumpAndSettle();
-  expect(find.text('Profile'), findsOneWidget);
-
-  await tester.tap(find.textContaining('Posts by this user'));
-  await tester.pumpAndSettle();
-
-  // Список открылся во вкладке Feed, стека контактов на экране больше нет.
-  expect(find.text('The first bug'), findsOneWidget);
-  expect(find.text('Profile'), findsNothing);
-});
-```
-
-Три слоя роутинга взаимозаменяемы снаружи: выбор между ними определяет форму
-кода, а не поведение приложения.
-
-## Экран тестируется без роутера
-
-Экран зависит от контракта, а не от библиотеки навигации, поэтому проверяется
-без роутера вообще:
-
-```dart
-final class _RecordingCoordinator implements UserProfileScreenCoordinator {
-  final List<String> requests = <String>[];
-
-  @override
-  void onUserPostsRoute(BuildContext context, {required String userId}) =>
-      requests.add(userId);
-}
-
-testWidgets('profile asks its coordinator and navigates nowhere itself', (
-  tester,
-) async {
-  final coordinator = _RecordingCoordinator();
-
-  await tester.pumpWidget(
-    MaterialApp(home: UserProfileScreen(userId: 'u1', coordinator: coordinator)),
-  );
-
-  await tester.tap(find.byType(FilledButton));
-
-  expect(coordinator.requests, ['u1']);
-});
-```
-
-Запрос с ответом подделывается так же: координатор-заглушка возвращает
-пользователя, ничего не открывая.
-
-## Как это разложено по файлам
-
-Во всех трёх ветках роутинг лежит в одних и тех же трёх файлах:
-
-```
-lib/router/
-  app_router.dart            дерево приложения; единственное место, знающее обе вкладки
-  feed_tab_router.dart       карта вкладки Feed и ответы на запросы её экранов
-  contacts_tab_router.dart   то же для Contacts
-```
-
-Меняется только содержимое файла вкладки:
-
-| Ветка | Что внутри файла вкладки |
-| --- | --- |
-| `part-1-imperative` | Экраны вкладки и переходы, к которым ведёт каждый запрос |
-| `part-2-gorouter` | Дерево локаций вкладки и координаторы её экранов |
-| `part-3-autoroute` | Дерево локаций, страницы и те же координаторы |
-
-Это и есть вторая цель из введения: чтобы понять навигацию вкладки, достаточно
-открыть один файл.
-
-## Что это даёт
-
-- Экран переиспользуется в другом контексте без правок: меняется только
-  переданная ему реализация.
-- Навигация вкладки описана в одном месте и читается сверху вниз.
-- Смена роутера не затрагивает экраны: между частями 2 и 3 они не изменились.
-- Экран тестируется без навигации, навигация — одним сценарным тестом.
-
-## Когда не нужно
-
-Если экран один и переход из него один, отдельный контракт — лишний слой.
-Приём окупается там, где экран используется более чем в одном контексте или
-где переход зависит от того, откуда экран открыт.
-
-## Итого
-
-Экран сообщает, что попросил пользователь. Решение принимает тот, у кого есть
-информация для этого решения. Форма контракта — колбэк или интерфейс — и
-механика перехода зависят от выбранной библиотеки; приём от этого не меняется.
+Обратная задача — выбрать библиотеку навигации — при этом остаётся отдельной и
+на структуру экранов не влияет.
 
 ## Ссылки
 
@@ -866,14 +783,10 @@ lib/router/
 
 2. [Hudson, «How to use the coordinator pattern in iOS apps»](https://www.hackingwithswift.com/articles/71/how-to-use-the-coordinator-pattern-in-ios-apps) — подробный разбор Координатора на практике.
 
-3. [Попков, «iOS Navigation: A Compact Router Approach»](https://medium.com/@alexey.yu.popkov/ios-navigation-a-compact-router-approach-46cffa04a6ef) — упрощённая версия приёма, с которой начался этот подход. Часть 1 ниже — его перенос на Flutter.
+3. [Попков, «iOS Navigation: A Compact Router Approach»](https://medium.com/@alexey.yu.popkov/ios-navigation-a-compact-router-approach-46cffa04a6ef) — упрощённая версия приёма для iOS. [Часть 1](#часть-1-императивная-навигация) — её перенос на Flutter.
 
 4. [Navigation with Compose](https://developer.android.com/develop/ui/compose/navigation) — официальный гайд Android: не передавать `navController` внутрь composable, а прокидывать колбэки.
 
-Дополнительно:
+5. [example_routing_coordinator_flutter](https://github.com/AlexeyYuPopkov/example_routing_coordinator_flutter) — репозиторий с кодом всех трёх реализаций.
 
-- [Shevchuk, «Navigation done right: a case for hierarchical routing with Flutter» (2020)](https://medium.com/flutter-community/navigation-done-right-a-case-for-hierarchical-routing-with-flutter-ca0aac1275ad) — ближайший аналог во Flutter: решение о переходе поднимается от экрана к родителю.
-
-- [flow_builder](https://github.com/felangel/flow_builder) — другая механика того же разделения: экран меняет состояние потока, стек перестраивается сам.
-
-- [Code with Andrea, «Bottom Navigation Bar with Stateful Nested Routes»](https://codewithandrea.com/articles/flutter-bottom-navigation-bar-nested-routes-gorouter/) — механика `StatefulShellRoute`, на которой построена часть 2.
+6. [Shevchuk, «Navigation done right: a case for hierarchical routing with Flutter» (2020)](https://medium.com/flutter-community/navigation-done-right-a-case-for-hierarchical-routing-with-flutter-ca0aac1275ad) — близкий по смыслу подход во Flutter: решение о переходе поднимается от экрана к родителю.
