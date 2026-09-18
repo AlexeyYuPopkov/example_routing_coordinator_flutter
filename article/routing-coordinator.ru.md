@@ -130,52 +130,122 @@ go_router, состав экранов во всех трёх ветках од�
 
 ## Часть 1. Императивная навигация
 
-### Контракт экрана
+Реализация не использует сторонних пакетов: только `Navigator` и `GlobalKey`.
+Интерфейс перехода здесь выражен не абстрактным интерфейсом, а колбэком — по
+синтаксическим соображениям. Обработчик пишется непосредственно в том месте,
+где собирается экран, поэтому переход и его назначение видны в одной точке, без
+отдельного класса-реализации и перехода к его объявлению.
 
-Рядом с экраном объявляется перечень запросов — то, что пользователь может
-попросить, — и колбэк, через который запрос уходит наружу:
+Ниже приведены четыре файла в том порядке, в каком их читает разработчик,
+открывший проект.
 
-```dart
-sealed class PostDetailsScreenRoute<T> {
-  const PostDetailsScreenRoute();
-}
-
-final class OpenAuthorRoute extends PostDetailsScreenRoute<Never> {
-  final String userId;
-
-  const OpenAuthorRoute(this.userId);
-}
-
-/// Запрос с ответом: даёт выбранного пользователя или null.
-final class PickUserRoute extends PostDetailsScreenRoute<User> {
-  const PickUserRoute();
-}
-
-typedef OnPostDetailsScreenRoute =
-    Future<T?> Function<T>(PostDetailsScreenRoute<T> route);
-```
-
-Параметр типа `T` — это тип ответа. `OpenAuthorRoute` ответа не даёт, поэтому
-`Never`; `PickUserRoute` отвечает `User`. Один колбэк обслуживает всё семейство
-запросов и остаётся типизированным.
-
-Внутри экрана переход без ответа и запрос с ответом выглядят одинаково просто:
+### main.dart
 
 ```dart
-// Переход
-onTap: () => widget.onRoute(OpenAuthorRoute(author.id)),
+void main() => runApp(App(appRouter: AppRouter()));
 
-// Запрос с ответом — обычное ожидание значения
-final user = await widget.onRoute(const PickUserRoute());
+class App extends StatelessWidget {
+  final AppRouter appRouter;
+
+  const App({super.key, required this.appRouter});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      ...
+      home: RootScreen(appRouter: appRouter),
+    );
+  }
+}
 ```
 
-Экран не знает, каким будет следующий экран, как он откроется — страницей,
-шторкой или диалогом — и каким образом вернётся ответ.
+`AppRouter` — обычный объект, создаётся до построения дерева виджетов и
+передаётся в корневой экран.
 
-### Роутер вкладки — карта переходов
+### root_screen.dart
 
-Это ключевой файл. Метод на экран, внутри метода — все переходы, к которым
-экран ведёт. Файл читается сверху вниз как карта вкладки:
+```dart
+class RootScreen extends StatelessWidget {
+  final AppRouter appRouter;
+
+  const RootScreen({super.key, required this.appRouter});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: appRouter.currentTab,
+      builder: (context, currentTab, child) => Scaffold(
+        body: IndexedStack(
+          index: currentTab.index,
+          children: [
+            TabNavigator(
+              navigatorKey: appRouter.feedNavigatorKey,
+              rootBuilder: appRouter.feedTabRouter.buildRoot,
+            ),
+            TabNavigator(
+              navigatorKey: appRouter.contactsNavigatorKey,
+              rootBuilder: appRouter.contactsTabRouter.buildRoot,
+            ),
+          ],
+        ),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: currentTab.index,
+          onDestinationSelected: (index) =>
+              appRouter.switchTo(AppTab.values[index]),
+          destinations: const [...],
+        ),
+      ),
+    );
+  }
+}
+```
+
+Корневой экран отвечает за один уровень навигации — переключение вкладок. Он не
+знает, какие экраны находятся внутри вкладок: содержимое каждой строит
+соответствующий роутер вкладки.
+
+### app_router.dart
+
+```dart
+enum AppTab { feed, contacts }
+
+final class AppRouter {
+  final feedNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'feed');
+
+  final contactsNavigatorKey = GlobalKey<NavigatorState>(
+    debugLabel: 'contacts',
+  );
+
+  final currentTab = ValueNotifier(AppTab.feed);
+
+  late final feedTabRouter = FeedTabRouter(navigatorKey: feedNavigatorKey);
+
+  late final contactsTabRouter = ContactsTabRouter(
+    navigatorKey: contactsNavigatorKey,
+    onRoute: _onContactsTabRoute,
+  );
+
+  void switchTo(AppTab tab) => currentTab.value = tab;
+
+  /// Последний обработчик цепочки: переход между вкладками требует знания
+  /// обеих, поэтому обрабатывается здесь.
+  Future<T?> _onContactsTabRoute<T>(ContactsTabRoute<T> route) async {
+    switch (route) {
+      case UserPostsRoute(:final userId):
+        switchTo(AppTab.feed);
+        feedTabRouter.openUserPosts(userId);
+        return null;
+    }
+  }
+}
+```
+
+Это единственное место, которому известны обе вкладки. Вкладка контактов не
+может открыть посты автора у себя — они принадлежат другой вкладке, — поэтому
+передаёт запрос сюда, а здесь выполняется переключение вкладки и открытие
+списка в ленте.
+
+### feed_tab_router.dart
 
 ```dart
 final class FeedTabRouter with TabRouter {
@@ -187,11 +257,9 @@ final class FeedTabRouter with TabRouter {
   @override
   Widget buildRoot(BuildContext context) => _postList();
 
-  /// Точка входа для оболочки: запрос, который не смогла обслужить
-  /// вкладка контактов.
+  /// Точка входа для запроса, пришедшего от вкладки контактов.
   void openUserPosts(String userId) => push(_postList(authorId: userId));
 
-  /// Один экран, два применения: корень вкладки и посты одного автора.
   Widget _postList({String? authorId}) => PostListScreen(
     authorId: authorId,
     onRoute: <T>(route) async {
@@ -216,8 +284,6 @@ final class FeedTabRouter with TabRouter {
     },
   );
 
-  /// В ленте посты автора остаются в этом же стеке.
-  /// Вкладка контактов отвечает на этот же запрос иначе.
   Widget _userProfile(String userId) => UserProfileScreen(
     userId: userId,
     onRoute: <T>(route) async {
@@ -241,65 +307,24 @@ final class FeedTabRouter with TabRouter {
 }
 ```
 
-Чтобы узнать, куда ведёт любой экран вкладки, достаточно найти его метод:
-список постов открывает пост, пост — профиль автора или экран выбора
-пользователя, профиль — список постов автора. Вся навигация вкладки видна
-целиком, без перехода по файлам экранов.
+Файл содержит все переходы вкладки: метод на экран, внутри метода — все
+направления, к которым этот экран ведёт. Список постов открывает пост, пост —
+профиль автора или экран выбора пользователя, профиль — список постов автора.
 
-`switch` по sealed-классу исчерпывающий: при добавлении нового запроса
-компилятор укажет все места, где он не обработан.
+### Почему это наглядно
 
-Базовые операции вынесены в миксин `TabRouter`:
+Навигация читается сверху вниз по четырём файлам, и на каждом уровне видно
+ровно тот слой, за который этот уровень отвечает:
 
-```dart
-mixin TabRouter {
-  GlobalKey<NavigatorState> get navigatorKey;
+- `main.dart` — приложение и корневой экран;
+- `root_screen.dart` — две вкладки и переключение между ними;
+- `app_router.dart` — обе вкладки целиком и переходы между ними;
+- `feed_tab_router.dart` — все экраны вкладки и переходы внутри неё.
 
-  Widget buildRoot(BuildContext context);
-
-  Future<T?> push<T>(Widget screen) async { ... }
-
-  void pop<T>(T result) => navigatorKey.currentState?.pop(result);
-}
-```
-
-Миксин, а не базовый класс: роутер вкладки не является частным случаем чего-то,
-он лишь владеет навигатором, и слот суперкласса остаётся свободным.
-
-### Тот же приём уровнем выше
-
-Вкладка контактов не может открыть посты у себя — они принадлежат другой
-вкладке. Она поступает так же, как экран: объявляет запрос и передаёт его выше.
-
-```dart
-sealed class ContactsTabRoute<T> {
-  const ContactsTabRoute();
-}
-
-final class UserPostsRoute extends ContactsTabRoute<Never> {
-  final String userId;
-
-  const UserPostsRoute(this.userId);
-}
-```
-
-Экран — эксперт по запросам своего пользователя, но не по приложению. Роутер
-вкладки — эксперт по своему стеку, но тоже не по приложению. Последним в
-цепочке стоит `AppRouter` — единственное место, которое знает обе вкладки:
-
-```dart
-Future<T?> _onContactsTabRoute<T>(ContactsTabRoute<T> route) async {
-  switch (route) {
-    case UserPostsRoute(:final userId):
-      switchTo(AppTab.feed);
-      feedTabRouter.openUserPosts(userId);
-      return null;
-  }
-}
-```
-
-Запрос поднимается ровно до того уровня, на котором для ответа достаточно
-информации.
+То, что уровню неизвестно, он не обрабатывает, а делегирует выше: экран
+сообщает о запросе роутеру вкладки, роутер вкладки — `AppRouter`, если запрос
+выходит за пределы её стека. Чтобы понять навигацию вкладки, достаточно одного
+файла; чтобы понять навигацию приложения — четырёх, читаемых подряд.
 
 ---
 
