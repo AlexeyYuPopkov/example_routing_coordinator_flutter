@@ -18,7 +18,7 @@ TextButton(
 )
 ```
 
-auto_route goes further and adds the extensions `context.router.push(...)` and `context.pushRoute(...)`, which make calls to navigation from a widget even more convenient. In some projects the next screen is also created directly in the code of the previous one.
+auto_route goes further and adds the extensions `context.router.push(...)` and `context.pushRoute(...)`, which make calls to navigation from a widget even more convenient.
 
 This leads to the following problems:
 
@@ -333,7 +333,7 @@ If a level does not have the required information, it does not handle the reques
 
 ## Part 2. go_router
 
-This library provides a tree of locations, and a transition is a move to a location. The approach is the same, but the form of the contract is different: instead of a callback the screen takes an abstract interface. A callback gives no advantage in syntax here, because the handler cannot be written at the place where the location is declared: the construction of a screen and the reaction to a tap are placed in different parts of the tree.
+This library provides a tree of locations, and a transition is a move to a location. The approach is the same, but the form of the contract is different: instead of a callback the screen takes an abstract interface. The visible tree of transitions, which the imperative approach had to assemble by hand, is here provided by the `GoRouter(routes: [...])` constructor itself, and `onRoute` handlers with their `switch` written inside it would only clutter that picture. Nothing, however, prevents using callbacks here as well, exactly as in part 1.
 
 The order of the files is the same.
 
