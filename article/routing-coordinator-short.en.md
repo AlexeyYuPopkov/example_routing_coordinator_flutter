@@ -1,6 +1,6 @@
 # Flutter Navigation Is an Information Expert Problem
 
-*The principle in short. The full version, with three complete implementations — `Navigator`, go_router and auto_route — is linked at the end.*
+*This article is about the principle. The code of the sample application that illustrates it — the same navigation implemented with `Navigator`, with go_router and with auto_route — is examined in a separate article, linked at the end.*
 
 ## The guidelines lead the wrong way
 
@@ -16,7 +16,7 @@ TextButton(
 
 auto_route goes further and adds the extensions `context.router.push(...)` and `context.pushRoute(...)`, which make such a call even shorter. Neither the Flutter documentation nor the guides of these packages mention that a transition defined inside widget code is an architectural problem. On the contrary, it is presented as the normal way.
 
-This is not specific to Flutter. In iOS, the guidelines from Apple configure the next screen — and often create it — in the code of the previous one: this is true for storyboard segues, for `pushViewController`, and for the early `NavigationLink(destination:)`. For this reason the Coordinator pattern [\[1\]](#references) remains common practice there. Android came to the opposite conclusion from another direction: the official Jetpack Compose guide requires developers not to pass `navController` into a composable, but to pass callbacks instead, so that screens stay reusable and testable [\[2\]](#references).
+This is not specific to Flutter. In iOS, the guidelines from Apple configure the next screen — and often create it — in the code of the previous one: this is true for storyboard segues, for `pushViewController`, and for the early `NavigationLink(destination:)`. For this reason the Coordinator pattern [\[1\]](#references), [\[2\]](#references) remains common practice there. Android came to the opposite conclusion from another direction: the official Jetpack Compose guide requires developers not to pass `navController` into a composable, but to pass callbacks instead, so that screens stay reusable and testable [\[3\]](#references).
 
 ## The resulting design errors
 
@@ -31,9 +31,9 @@ A screen that knows where it leads introduces four errors at once:
 
 The problem appears because the previous screen owns information about the next one. The implementation of the transition has to be moved out of the screen code — and the question is where to move it.
 
-The answer is given by **Information Expert**, one of the GRASP principles described by Craig Larman [\[3\]](#references): a responsibility is assigned to the class that has the information necessary to fulfil it.
+The answer is given by **Information Expert**, one of the GRASP principles described by Craig Larman [\[4\]](#references): a responsibility is assigned to the class that has the information necessary to fulfil it.
 
-The screen does not have this information. Which tab it belongs to, which stack is below it, whether the next screen must be opened above the current one or the whole section must be switched — none of it is known inside the screen. It exists in the place where the application is assembled from screens.
+This information is not the screen's own. Which tab it belongs to, which stack is below it, whether the next screen must be opened above the current one or the whole section must be switched — none of this is decided by the screen. It is decided in the place where the application is assembled from screens.
 
 So the screen declares an abstract contract for a transition and reports a user request through it. Nothing beyond this contract is known to the screen:
 
@@ -100,7 +100,7 @@ final class FollowersUserListCoordinator implements UserListScreenCoordinator {
 }
 ```
 
-Neither destination can be computed inside the screen: to build the path, the screen would have to know which branch of the application it was opened in — exactly the information that does not exist there.
+Neither destination can be chosen inside the screen — not because the information is out of reach there, but because reaching for it is the error itself. A widget can always ask `GoRouter.of(context)`, or its auto_route counterpart, where it currently is. Having asked, the screen would then have to enumerate the places it can be opened from, that is, to know the structure of the whole application; every new place of use would mean editing the screen again, and the coupling that was just removed would be back. The information is available to the screen, but it is not the screen's own.
 
 The choice of the implementation is made at the only point that knows the context — where the screen is constructed. This point is not a property of go_router:
 
@@ -157,22 +157,24 @@ This is the practical part. Transitions are moved out of screens one screen at a
 
 For the same reason the approach applies to existing code, not only to a new project. And it does not depend on a specific library: the form of the contract and the mechanics of a transition are defined by the selected tool, but the distribution of responsibilities stays the same.
 
-The approach is not new — in iOS it is known as the Coordinator pattern [\[1\]](#references), and a similar approach for Flutter is described in [\[4\]](#references), [\[5\]](#references). What is worth repeating is the reason behind it: the screen is not the one who knows.
+The approach is not new. In iOS it is known as the Coordinator pattern [\[1\]](#references), [\[2\]](#references), and a simplified version of it is described in [\[5\]](#references); for Flutter a similar approach is described in [\[6\]](#references). What is worth repeating is the reason behind it: the screen is not the one who knows.
 
 ---
 
-This article describes a principle, and the listings above are the shortest way to state it, not a recommended layout of files. One possible illustration of the same principle is a small application with two tabs, their own stacks and one profile screen that behaves differently in each tab: its navigation is implemented three times — with the built-in `Navigator`, with go_router and with auto_route. The full article is here: **[link to the full article]**, and the source code is in the repository [\[6\]](#references).
+This article describes a principle, and the listings above are the shortest way to state it, not a recommended layout of files. One possible illustration of it is a sample application with two tabs, their own stacks and one profile screen that behaves differently in each tab: its navigation is implemented three times — with the built-in `Navigator`, with go_router and with auto_route. The code is in the repository [\[7\]](#references), and a separate article examines it in detail: **[link to the article about the example]**.
 
 ## References
 
 1. [Khanlou, "The Coordinator" (2015)](https://khanlou.com/2015/01/the-coordinator/) — the article that introduced the Coordinator pattern.
 
-2. [Navigation with Compose](https://developer.android.com/develop/ui/compose/navigation) — the official Android guide: do not pass `navController` into a composable, pass callbacks instead.
+2. [Hudson, "How to use the coordinator pattern in iOS apps"](https://www.hackingwithswift.com/articles/71/how-to-use-the-coordinator-pattern-in-ios-apps) — a detailed description of the Coordinator in practice.
 
-3. Larman, *Applying UML and Patterns* (1997) — the book that describes the GRASP principles, including Information Expert.
+3. [Navigation with Compose](https://developer.android.com/develop/ui/compose/navigation) — the official Android guide: do not pass `navController` into a composable, pass callbacks instead.
 
-4. [Shevchuk, "Navigation done right: a case for hierarchical routing with Flutter" (2020)](https://medium.com/flutter-community/navigation-done-right-a-case-for-hierarchical-routing-with-flutter-ca0aac1275ad) — a similar approach in Flutter: the decision about a transition is passed from a screen to its parent.
+4. Larman, *Applying UML and Patterns* (1997) — the book that describes the GRASP principles, including Information Expert.
 
-5. [Popkov, "iOS Navigation: A Compact Router Approach"](https://medium.com/@alexey.yu.popkov/ios-navigation-a-compact-router-approach-46cffa04a6ef) — a simplified version of the approach for iOS.
+5. [Popkov, "iOS Navigation: A Compact Router Approach"](https://medium.com/@alexey.yu.popkov/ios-navigation-a-compact-router-approach-46cffa04a6ef) — a simplified version of the Coordinator approach for iOS.
 
-6. [example_routing_coordinator_flutter](https://github.com/AlexeyYuPopkov/example_routing_coordinator_flutter) — one possible illustration of the approach: a sample application whose navigation is implemented three ways.
+6. [Shevchuk, "Navigation done right: a case for hierarchical routing with Flutter" (2020)](https://medium.com/flutter-community/navigation-done-right-a-case-for-hierarchical-routing-with-flutter-ca0aac1275ad) — a similar approach in Flutter: the decision about a transition is passed from a screen to its parent.
+
+7. [example_routing_coordinator_flutter](https://github.com/AlexeyYuPopkov/example_routing_coordinator_flutter) — one possible illustration of the approach: a sample application whose navigation is implemented three ways.
