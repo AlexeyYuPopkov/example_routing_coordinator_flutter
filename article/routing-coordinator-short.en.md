@@ -117,24 +117,23 @@ GoRoute(
 )
 
 // auto_route: the same choice is made in the page that wraps the screen
-// @RoutePage()
-// final class ContactsUserListPage extends StatelessWidget {
-//   const ContactsUserListPage({super.key});
-//
-//   @override
-//   Widget build(BuildContext context) => UserListScreen(
-//         users: allUsers,
-//         coordinator: const ContactsUserListCoordinator(),
-//       );
-// }
+@RoutePage()
+final class ContactsUserListPage extends StatelessWidget {
+  const ContactsUserListPage({super.key});
+  @override
+  Widget build(BuildContext context) => UserListScreen(
+        users: allUsers,
+        coordinator: const ContactsUserListCoordinator(),
+      );
+}
 
 // the built-in Navigator: the same choice is made where the route is created
-// MaterialPageRoute(
-//   builder: (_) => UserListScreen(
-//     users: allUsers,
-//     coordinator: const ContactsUserListCoordinator(),
-//   ),
-// )
+MaterialPageRoute(
+  builder: (_) => UserListScreen(
+    users: allUsers,
+    coordinator: const ContactsUserListCoordinator(),
+  ),
+)
 ```
 
 Nothing has been added to the application. The call that stood inside the widget in Listing 1 is still a single `context.push`, and it has only moved to the object that has the right to make this decision.
